@@ -52,6 +52,26 @@ app.post('/registration', async (req, res) => {
   }
 });
 
+// Retrieve all registrations
+app.get('/registrations', async (req, res) => {
+  try {
+    const allRegistrations = await Registration.find();
+    res.json(allRegistrations);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to retrieve registrations' });
+  }
+});
+// Delete all registrations
+app.delete('/registrations', async (req, res) => {
+  try {
+    const result = await Registration.deleteMany({});
+    res.json({ message: 'All registrations deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete registrations' });
+  }
+});
+
+
 app.get('/', (req, res) => {
   res.send('Hello, Digital Parliament world');
 });
