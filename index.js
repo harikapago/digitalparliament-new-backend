@@ -23,6 +23,45 @@ db.once('open', () => {
   console.log('Connected to database');
 });
 
+
+
+-------------------------------------registrtion-------------------------------
+const registrationSchema = new mongoose.Schema({
+  firstName: String,
+  lastName: String,
+  MobileNumber: String,
+  password: String,
+  DOB: Date,
+  gender: String,
+});
+
+// Create a Mongoose model based on the schema
+const Registration = mongoose.model('Registration', registrationSchema);
+
+
+// Handle POST request to create a new registration
+app.post('/registration', async (req, res) => {
+  const { MobileNumber } = req.body;
+
+  try {
+    // Check if a registration with the given MobileNumber already exists
+    const existingRegistration = await Registration.findOne({ MobileNumber });
+    
+    if (existingRegistration) {
+      // Registration with the same MobileNumber already exists
+      return res.status(400).json({ error: 'MobileNumber already registered' });
+    }
+    
+    // If no existing registration, create and save the new registration
+    const newRegistration = new Registration(req.body);
+    const savedRegistration = await newRegistration.save();
+    res.json(savedRegistration);
+  } catch (error) {
+    res.status(400).json({ error: 'Registration failed' });
+  }
+});
+
+
 app.get('/', (req, res) => {
     res.send('Hello, Digital Parliament world');
   });
