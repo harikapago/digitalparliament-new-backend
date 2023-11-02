@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-
+const multer = require('multer');
 const app = express();
 const cors = require('cors');
 
@@ -96,6 +96,98 @@ app.post('/login', async (req, res) => {
     res.json({ message: 'Login successful' });
   } catch (error) {
     res.status(400).json({ error: 'Login failed' });
+  }
+});
+
+// ----------------------------------------greviances api-----------------------
+const { BlobServiceClient } = require("@azure/storage-blob");
+
+const azureStorageConnectionString = "DefaultEndpointsProtocol=https;AccountName=surveyappanswers;AccountKey=/z7TbEOSeMD/CNN/KrNzhpxbqhaiV620aRfLBLRi9nhhiE4AyN9gAG/MywUOzXWpfOqwNctMSFBF+AStE1wa2g==;EndpointSuffix=core.windows.net";
+
+const blobServiceClient = BlobServiceClient.fromConnectionString(azureStorageConnectionString);
+
+const containerName = "digitalp-grievance";
+const containerClient = blobServiceClient.getContainerClient(containerName);
+
+// Set up multer for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+
+
+// Define a Mongoose schema for the Grievance collection
+const grievanceSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  imagePath: String, // Store the path to the uploaded image
+  location: String,
+});
+
+const Grievance = mongoose.model('Grievance', grievanceSchema);
+
+// Create an API endpoint for posting grievances
+app.post('/post-grievance', upload.single('image'), async (req, res) => {
+  try {
+    const { title, description, location } = req.body;
+    const imageData = req.file.buffer;
+    const contentType = req.file.mimetype;
+
+    const imageFileName = `${Date.now()}_${req.file.originalname}`; // Use a unique name
+    const blockBlobClient = containerClient.getBlockBlobClient(imageFileName);
+
+    await blockBlobClient.uploadData(imageData, {
+      blobHTTPHeaders: { blobContentType: contentType },
+    });
+
+    const imagePath = `${containerClient.url}/${imageFileName}`;
+
+    const grievance = new Grievance({ title, description, imagePath, location });
+    await grievance.save();
+
+    res.status(201).json({ message: 'Grievance posted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a GET route to fetch all grievances
+app.get('/get-grievances', async (req, res) => {
+  try {
+    const grievances = await Grievance.find();
+    res.json(grievances);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a DELETE route to delete all grievances
+app.delete('/delete-all-grievances', async (req, res) => {
+  try {
+    const result = await Grievance.deleteMany({});
+    res.json({ message: 'All grievances deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a DELETE route to delete a grievance by its ID
+app.delete('/delete-grievance/:id', async (req, res) => {
+  const grievanceId = req.params.id;
+
+  try {
+    const deletedGrievance = await Grievance.findByIdAndDelete(grievanceId);
+
+    if (!deletedGrievance) {
+      return res.status(404).json({ error: 'Grievance not found' });
+    }
+
+    res.json({ message: 'Grievance deleted successfully', deletedGrievance });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
