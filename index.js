@@ -73,6 +73,32 @@ app.delete('/registrations', async (req, res) => {
   }
 });
 
+// ------------------------------------------------login routes-----------------
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if a registration with the given email exists
+    const existingRegistration = await Registration.findOne({ email });
+
+    if (!existingRegistration) {
+      return res.status(400).json({ error: 'Email not found' });
+    }
+
+    // Compare the provided password with the stored password
+    if (existingRegistration.password !== password) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    // If the email and password are correct, you can provide a token or other authentication response.
+    // For simplicity, we'll just send a success message.
+    res.json({ message: 'Login successful' });
+  } catch (error) {
+    res.status(400).json({ error: 'Login failed' });
+  }
+});
+
 
 app.get('/', (req, res) => {
   res.send('Hello, Digital Parliament world');
