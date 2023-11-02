@@ -12,11 +12,13 @@ const port = process.env.PORT || 3000;
 const registrationSchema = new mongoose.Schema({
   firstName: String,
   lastName: String,
+  email: String, // Add email field
   MobileNumber: String,
   password: String,
   DOB: Date,
   gender: String,
 });
+
 
 // Create a Mongoose model based on the schema
 const Registration = mongoose.model('Registration', registrationSchema);
@@ -32,17 +34,17 @@ mongoose.connect("mongodb://nodebackend-for-dpapp-server:gWvKSCn8OvkfVvYzgBqtQ4Y
 
 // Handle POST request to create a new registration
 app.post('/registration', async (req, res) => {
-  const { MobileNumber } = req.body;
+  const { email, MobileNumber } = req.body;
 
   try {
-    // Check if a registration with the given MobileNumber already exists
-    const existingRegistration = await Registration.findOne({ MobileNumber });
-    
+    // Check if a registration with the given email or MobileNumber already exists
+    const existingRegistration = await Registration.findOne({ $or: [{ email }, { MobileNumber }] });
+
     if (existingRegistration) {
-      // Registration with the same MobileNumber already exists
-      return res.status(400).json({ error: 'MobileNumber already registered' });
+      // Registration with the same email or MobileNumber already exists
+      return res.status(400).json({ error: 'Email or MobileNumber already registered' });
     }
-    
+
     // If no existing registration, create and save the new registration
     const newRegistration = new Registration(req.body);
     const savedRegistration = await newRegistration.save();
