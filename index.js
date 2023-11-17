@@ -121,6 +121,7 @@ const grievanceSchema = new mongoose.Schema({
   description: String,
   imagePath: String, // Store the path to the uploaded image
   location: String,
+  dateOfPosting: { type: Date, default: Date.now }
 });
 
 const Grievance = mongoose.model('Grievance', grievanceSchema);
@@ -190,6 +191,100 @@ app.delete('/delete-grievance/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// -----------------------------------------------------------applauses apis-------------------
+// const { BlobServiceClient } = require("@azure/storage-blob");
+
+// const azureStorageConnectionString = "DefaultEndpointsProtocol=https;AccountName=surveyappanswers;AccountKey=/z7TbEOSeMD/CNN/KrNzhpxbqhaiV620aRfLBLRi9nhhiE4AyN9gAG/MywUOzXWpfOqwNctMSFBF+AStE1wa2g==;EndpointSuffix=core.windows.net";
+
+// const blobServiceClient = BlobServiceClient.fromConnectionString(azureStorageConnectionString);
+
+const containerName2 = "digitalp-applause";
+const containerClient2 = blobServiceClient.getContainerClient(containerName2);
+
+// Set up multer for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+
+
+// Define a Mongoose schema for the Grievance collection
+const applauseSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  imagePath: String, // Store the path to the uploaded image
+  location: String,
+  dateOfPosting: { type: Date, default: Date.now }
+});
+
+const Applause = mongoose.model('Applause', applauseSchema);
+
+// Create an API endpoint for posting applauses
+app.post('/post-applause', upload.single('image'), async (req, res) => {
+  try {
+    const { title, description, location } = req.body;
+    const imageData = req.file.buffer;
+    const contentType = req.file.mimetype;
+
+    const imageFileName = `${Date.now()}_${req.file.originalname}`; // Use a unique name
+    const blockBlobClient = containerClient2.getBlockBlobClient(imageFileName);
+
+    await blockBlobClient.uploadData(imageData, {
+      blobHTTPHeaders: { blobContentType: contentType },
+    });
+
+    const imagePath = `${containerClient2.url}/${imageFileName}`;
+
+    const  applause= new Applause({ title, description, imagePath, location });
+    await applause.save();
+
+    res.status(201).json({ message: 'applause posted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a GET route to fetch all applauses
+app.get('/get-applauses', async (req, res) => {
+  try {
+    const applauses = await Applause.find();
+    res.json(applauses);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a DELETE route to delete all applauses
+app.delete('/delete-all-applauses', async (req, res) => {
+  try {
+    const result = await Applause.deleteMany({});
+    res.json({ message: 'All applauses deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a DELETE route to delete a applause by its ID
+app.delete('/delete-applause/:id', async (req, res) => {
+  const applauseId = req.params.id;
+
+  try {
+    const deletedApplause = await Applause.findByIdAndDelete(applauseId);
+
+    if (!deletedApplause) {
+      return res.status(404).json({ error: 'applause not found' });
+    }
+
+    res.json({ message: 'applause deleted successfully', deletedApplause });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 app.get('/', (req, res) => {
