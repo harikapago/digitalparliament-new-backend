@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const app = express();
 const cors = require('cors');
+const { Party } = require('./partyschema.js');
 
 app.use(cors());
 app.use(express.json());
@@ -276,6 +277,41 @@ app.delete('/delete-applause/:id', async (req, res) => {
     }
 
     res.json({ message: 'applause deleted successfully', deletedApplause });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+// -------------------------------------Party apis----------------------
+
+const containerName3 = "digitalp-party-symbols";
+const containerClient3 = blobServiceClient.getContainerClient(containerName3);
+
+
+
+// Create an API endpoint for posting parties
+app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
+  try {
+    const data = req.body;
+    const partySymbolData = req.file.buffer;
+    const contentType = req.file.mimetype;
+
+    const partySymbolFileName = `${Date.now()}_partySymbol.${contentType.split('/')[1]}`; // Use a unique name
+    const blockBlobClient = containerClient3.getBlockBlobClient(partySymbolFileName);
+
+    await blockBlobClient.uploadData(partySymbolData, {
+      blobHTTPHeaders: { blobContentType: contentType },
+    });
+
+    const partySymbolPath = `${containerClient3.url}/${partySymbolFileName}`;
+
+    // Add the partySymbolPath to the data before saving it to the database
+    data.partySymbol = partySymbolPath;
+
+    const newParty = new Party(data);
+    await newParty.save();
+
+    res.status(201).json({ message: 'Party created successfully', party: newParty });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
