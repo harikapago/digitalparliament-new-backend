@@ -292,23 +292,70 @@ const containerClient3 = blobServiceClient.getContainerClient(containerName3);
 
 // Create an API endpoint for posting parties
 
-app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
+// app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
+//   try {
+//     const data = req.body;
+//     const partySymbolData = req.file.buffer;
+//     const contentType = req.file.mimetype;
+
+//     const partySymbolFileName = `${Date.now()}_partySymbol.${contentType.split('/')[1]}`; // Use a unique name
+//     const blockBlobClient = containerClient3.getBlockBlobClient(partySymbolFileName);
+
+//     await blockBlobClient.uploadData(partySymbolData, {
+//       blobHTTPHeaders: { blobContentType: contentType },
+//     });
+
+//     const partySymbolPath = `${containerClient3.url}/${partySymbolFileName}`;
+
+//     // Add the partySymbolPath to the data before saving it to the database
+//     data.partySymbol = partySymbolPath;
+
+//     // Check if a party with the same partyCode already exists
+//     const existingParty = await Party.findOne({ partyCode: data.partyCode });
+
+//     if (existingParty) {
+//       return res.status(400).json({ error: 'Party with entered partyCode already exists' });
+//     }
+
+//     // If partyCode is unique, proceed with party creation
+//     const newParty = new Party(data);
+//     await newParty.save();
+
+//     res.status(201).json({ message: 'Party created successfully', party: newParty });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Server error' });
+//   }
+// });
+
+// Create an API endpoint for posting parties
+app.post('/api/party', upload.fields([{ name: 'partySymbol', maxCount: 1 }, { name: 'manifestoFilesinpdf', maxCount: 1 }]), async (req, res) => {
   try {
     const data = req.body;
-    const partySymbolData = req.file.buffer;
-    const contentType = req.file.mimetype;
 
-    const partySymbolFileName = `${Date.now()}_partySymbol.${contentType.split('/')[1]}`; // Use a unique name
-    const blockBlobClient = containerClient3.getBlockBlobClient(partySymbolFileName);
-
-    await blockBlobClient.uploadData(partySymbolData, {
-      blobHTTPHeaders: { blobContentType: contentType },
+    // Upload partySymbol file
+    const partySymbolData = req.files['partySymbol'][0].buffer;
+    const partySymbolContentType = req.files['partySymbol'][0].mimetype;
+    const partySymbolFileName = `${Date.now()}_partySymbol.${partySymbolContentType.split('/')[1]}`;
+    const partySymbolBlockBlobClient = containerClient3.getBlockBlobClient(partySymbolFileName);
+    await partySymbolBlockBlobClient.uploadData(partySymbolData, {
+      blobHTTPHeaders: { blobContentType: partySymbolContentType },
     });
-
     const partySymbolPath = `${containerClient3.url}/${partySymbolFileName}`;
-
-    // Add the partySymbolPath to the data before saving it to the database
     data.partySymbol = partySymbolPath;
+
+    // Upload manifestoFilesinpdf file
+    if (req.files['manifestoFilesinpdf'] && req.files['manifestoFilesinpdf'][0]) {
+      const manifestoData = req.files['manifestoFilesinpdf'][0].buffer;
+      const manifestoContentType = req.files['manifestoFilesinpdf'][0].mimetype;
+      const manifestoFileName = `${Date.now()}_manifestoFilesinpdf.${manifestoContentType.split('/')[1]}`;
+      const manifestoBlockBlobClient = containerClient3.getBlockBlobClient(manifestoFileName);
+      await manifestoBlockBlobClient.uploadData(manifestoData, {
+        blobHTTPHeaders: { blobContentType: manifestoContentType },
+      });
+      const manifestoPath = `${containerClient3.url}/${manifestoFileName}`;
+      data.manifestoFilesinpdf = manifestoPath;
+    }
 
     // Check if a party with the same partyCode already exists
     const existingParty = await Party.findOne({ partyCode: data.partyCode });
@@ -327,6 +374,7 @@ app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // Get all parties
 app.get('/api/parties', async (req, res) => {
