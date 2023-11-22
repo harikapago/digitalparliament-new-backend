@@ -282,6 +282,7 @@ app.delete('/delete-applause/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 // -------------------------------------Party apis----------------------
 
 const containerName3 = "digitalp-party-symbols";
@@ -290,6 +291,7 @@ const containerClient3 = blobServiceClient.getContainerClient(containerName3);
 
 
 // Create an API endpoint for posting parties
+
 app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
   try {
     const data = req.body;
@@ -308,6 +310,14 @@ app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
     // Add the partySymbolPath to the data before saving it to the database
     data.partySymbol = partySymbolPath;
 
+    // Check if a party with the same partyCode already exists
+    const existingParty = await Party.findOne({ partyCode: data.partyCode });
+
+    if (existingParty) {
+      return res.status(400).json({ error: 'Party with entered partyCode already exists' });
+    }
+
+    // If partyCode is unique, proceed with party creation
     const newParty = new Party(data);
     await newParty.save();
 
@@ -318,7 +328,44 @@ app.post('/api/party', upload.single('partySymbol'), async (req, res) => {
   }
 });
 
+// Get all parties
+app.get('/api/parties', async (req, res) => {
+  try {
+    const parties = await Party.find();
+    res.json(parties);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
+// Delete all parties
+app.delete('/api/parties', async (req, res) => {
+  try {
+    await Party.deleteMany();
+    res.json({ message: 'All parties deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete a party by partyCode
+app.delete('/api/party/:partyCode', async (req, res) => {
+  const { partyCode } = req.params;
+  try {
+    const deletedParty = await Party.findOneAndDelete({ partyCode });
+    
+    if (!deletedParty) {
+      return res.status(404).json({ error: 'Party not found' });
+    }
+
+    res.json({ message: 'Party deleted successfully', deletedParty });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.send('Hello, Digital Parliament world');
