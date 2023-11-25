@@ -123,6 +123,7 @@ const grievanceSchema = new mongoose.Schema({
   description: String,
   imagePath: String, // Store the path to the uploaded image
   location: String,
+  paymentId:String,
   dateOfPosting: { type: Date, default: Date.now }
 });
 
@@ -213,6 +214,7 @@ const applauseSchema = new mongoose.Schema({
   description: String,
   imagePath: String, // Store the path to the uploaded image
   location: String,
+  paymentId:String,
   dateOfPosting: { type: Date, default: Date.now }
 });
 
