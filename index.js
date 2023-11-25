@@ -4,6 +4,7 @@ const multer = require('multer');
 const app = express();
 const cors = require('cors');
 const { Party } = require('./partyschema.js');
+const ConstituencyData = require('./constituencyDataschema.js');
 
 app.use(cors());
 app.use(express.json());
@@ -414,6 +415,72 @@ app.delete('/api/party/:partyCode', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
+// -----------------------------------------------------------constituency data adding & displaying------------
+// to post  constituencies
+app.post('/constituency', async (req, res) => {
+  try {
+    // Check if the constituencyName already exists in the database
+    const existingConstituency = await ConstituencyData.findOne({
+      constituencyName: req.body.constituencyName,
+    });
+
+    if (existingConstituency) {
+      // If the constituency already exists, send a 409 Conflict response
+      return res.status(409).json({ error: 'Constituency already exists' });
+    }
+
+    // Create a new ConstituencyData instance based on the request body
+    const newConstituency = new ConstituencyData(req.body);
+
+    // Save the new constituency data to the database
+    const savedConstituency = await newConstituency.save();
+
+    res.status(201).json(savedConstituency);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+// Get all constituencies
+app.get('/constituencies', async (req, res) => {
+  try {
+    const allConstituencies = await ConstituencyData.find();
+    res.status(200).json(allConstituencies);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete all constituencies
+app.delete('/constituencies', async (req, res) => {
+  try {
+    await ConstituencyData.deleteMany();
+    res.status(204).send(); // 204 No Content
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a specific constituency by name
+app.delete('/constituency/:constituencyName', async (req, res) => {
+  const { constituencyName } = req.params;
+
+  try {
+    const deletedConstituency = await ConstituencyData.findOneAndDelete({ constituencyName });
+
+    if (!deletedConstituency) {
+      return res.status(404).json({ error: 'Constituency not found' });
+    }
+
+    res.status(200).json(deletedConstituency);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 app.get('/', (req, res) => {
   res.send('Hello, Digital Parliament world');
