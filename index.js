@@ -168,7 +168,7 @@ app.put('/update-grievance/:grievanceId', async (req, res) => {
 
    
     const updatedGrievance = await Grievance.findOneAndUpdate(
-      { _id: grievanceId, approvalStatus: 'pending' },
+      { _id: grievanceId },
       { $set: { approvalStatus: 'grievance cleared' } },
       { new: true }
     );
