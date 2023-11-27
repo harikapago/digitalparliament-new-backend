@@ -333,6 +333,7 @@ const containerClient3 = blobServiceClient.getContainerClient(containerName3);
 //   }
 // });
 
+
 // Create an API endpoint for posting parties
 app.post('/api/party', upload.fields([{ name: 'partySymbol', maxCount: 1 }, { name: 'manifestoFilesinpdf', maxCount: 1 }]), async (req, res) => {
   try {
@@ -380,6 +381,29 @@ app.post('/api/party', upload.fields([{ name: 'partySymbol', maxCount: 1 }, { na
   }
 });
 
+// Assuming you have your Party model and containerClient3 defined
+
+// PUT route for updating the approvalStatus of a party
+app.put('/api/party/approve/:partyCode', async (req, res) => {
+  try {
+    const partyCode = req.params.partyCode;
+
+    const updatedParty = await Party.findOneAndUpdate(
+      { partyCode: partyCode },
+      { $set: { approvalStatus: 'approved' } },
+      { new: true }
+    );
+
+    if (!updatedParty) {
+      return res.status(404).json({ error: 'Party not found' });
+    }
+
+    res.status(200).json({ message: 'Party approval status updated successfully', party: updatedParty });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 // Get all parties
 app.get('/api/parties', async (req, res) => {
