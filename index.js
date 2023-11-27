@@ -125,6 +125,10 @@ const grievanceSchema = new mongoose.Schema({
   location: String,
   paymentId:String,
   constituencyName:String,
+ approvalStatus: {
+    type: String,
+    default: 'pending', 
+  },
   dateOfPosting: { type: Date, default: Date.now }
 });
 
