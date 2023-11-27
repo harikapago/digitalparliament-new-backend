@@ -166,11 +166,7 @@ app.put('/update-grievance/:grievanceId', async (req, res) => {
   try {
     const grievanceId = req.params.grievanceId;
 
-    // Ensure that grievanceId is a valid ObjectId
-    if (!mongoose.isValidObjectId(grievanceId)) {
-      return res.status(400).json({ error: 'Invalid grievanceId' });
-    }
-
+   
     const updatedGrievance = await Grievance.findOneAndUpdate(
       { _id: grievanceId, approvalStatus: 'pending' },
       { $set: { approvalStatus: 'grievance cleared' } },
