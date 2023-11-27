@@ -30,6 +30,7 @@ const partySchema = new mongoose.Schema({
   longitude: { type: String },
   contactNo1: { type: String },
   contactNo2: { type: String },
+  approvalStatus: { type: String, default: 'pending', },
 });
 
 const Party = mongoose.model('Party', partySchema);
