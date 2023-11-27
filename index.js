@@ -160,6 +160,35 @@ app.post('/post-grievance', upload.single('image'), async (req, res) => {
   }
 });
 
+
+// Update route for changing approvalStatus to "grievance cleared"
+app.put('/update-grievance/:grievanceId', async (req, res) => {
+  try {
+    const grievanceId = req.params.grievanceId;
+
+    // Ensure that grievanceId is a valid ObjectId
+    if (!mongoose.isValidObjectId(grievanceId)) {
+      return res.status(400).json({ error: 'Invalid grievanceId' });
+    }
+
+    const updatedGrievance = await Grievance.findOneAndUpdate(
+      { _id: grievanceId, approvalStatus: 'pending' },
+      { $set: { approvalStatus: 'grievance cleared' } },
+      { new: true }
+    );
+
+    if (!updatedGrievance) {
+      return res.status(404).json({ error: 'Grievance not found or already cleared' });
+    }
+
+    res.status(200).json({ message: 'Grievance approval status updated to grievance cleared successfully', grievance: updatedGrievance });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 // Create a GET route to fetch all grievances
 app.get('/get-grievances', async (req, res) => {
   try {
