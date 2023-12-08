@@ -615,6 +615,42 @@ app.post('/api/mlas', upload.fields([
   }
 });
 
+app.get('/api/mlas', async (req, res) => {
+  try {
+    const allMLAs = await MLA.find();
+    res.status(200).json(allMLAs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/mlas', async (req, res) => {
+  try {
+    await MLA.deleteMany({});
+    res.status(200).json({ message: 'All MLA data deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/mlas/:aadharCardNumber', async (req, res) => {
+  const { aadharCardNumber } = req.params;
+
+  try {
+    const deletedMLA = await MLA.findOneAndDelete({ aadharCardNumber });
+
+    if (!deletedMLA) {
+      return res.status(404).json({ error: 'MLA not found' });
+    }
+
+    res.status(200).json({ message: 'MLA deleted successfully', mla: deletedMLA });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 app.get('/', (req, res) => {
