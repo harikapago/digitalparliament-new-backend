@@ -5,6 +5,7 @@ const app = express();
 const cors = require('cors');
 const { Party } = require('./partyschema.js');
 const ConstituencyData = require('./constituencyDataschema.js');
+const MLA = require('./MlaregistrationSchema.js');
 
 app.use(cors());
 app.use(express.json());
@@ -537,6 +538,83 @@ app.delete('/constituency/:constituencyName', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// --------------------------------------------------MLA Registrations-----------
+
+const containerNameMLA = "digitalp-mla-photos-and-files";
+const containerClientMLA = blobServiceClient.getContainerClient(containerNameMLA);
+
+app.post('/api/mlas', upload.fields([
+  { name: 'mlaPhoto', maxCount: 1 },
+  { name: 'aadharCardPhoto', maxCount: 1 },
+  { name: 'electionSymbolPath', maxCount: 1 },
+  { name: 'nominationPapersPath', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const data = req.body;
+
+    // Upload MLA photo
+    const mlaPhotoData = req.files['mlaPhoto'][0].buffer;
+    const mlaPhotoContentType = req.files['mlaPhoto'][0].mimetype;
+    const mlaPhotoFileName = `${Date.now()}_mlaPhoto.${mlaPhotoContentType.split('/')[1]}`;
+    const mlaPhotoBlockBlobClient = containerClientMLA.getBlockBlobClient(mlaPhotoFileName);
+    await mlaPhotoBlockBlobClient.uploadData(mlaPhotoData, {
+      blobHTTPHeaders: { blobContentType: mlaPhotoContentType },
+    });
+    const mlaPhotoPath = `${containerClientMLA.url}/${mlaPhotoFileName}`;
+    data.mlaPhoto = mlaPhotoPath;
+
+    // Upload Aadhar card photo
+    const aadharCardPhotoData = req.files['aadharCardPhoto'][0].buffer;
+    const aadharCardPhotoContentType = req.files['aadharCardPhoto'][0].mimetype;
+    const aadharCardPhotoFileName = `${Date.now()}_aadharCardPhoto.${aadharCardPhotoContentType.split('/')[1]}`;
+    const aadharCardPhotoBlockBlobClient = containerClientMLA.getBlockBlobClient(aadharCardPhotoFileName);
+    await aadharCardPhotoBlockBlobClient.uploadData(aadharCardPhotoData, {
+      blobHTTPHeaders: { blobContentType: aadharCardPhotoContentType },
+    });
+    const aadharCardPhotoPath = `${containerClientMLA.url}/${aadharCardPhotoFileName}`;
+    data.aadharCardPhoto = aadharCardPhotoPath;
+
+    // Upload election symbol file
+    const electionSymbolPathData = req.files['electionSymbolPath'][0].buffer;
+    const electionSymbolPathContentType = req.files['electionSymbolPath'][0].mimetype;
+    const electionSymbolPathFileName = `${Date.now()}_electionSymbolPath.${electionSymbolPathContentType.split('/')[1]}`;
+    const electionSymbolPathBlockBlobClient = containerClientMLA.getBlockBlobClient(electionSymbolPathFileName);
+    await electionSymbolPathBlockBlobClient.uploadData(electionSymbolPathData, {
+      blobHTTPHeaders: { blobContentType: electionSymbolPathContentType },
+    });
+    const electionSymbolPathPath = `${containerClientMLA.url}/${electionSymbolPathFileName}`;
+    data.electionSymbolPath = electionSymbolPathPath;
+
+    // Upload nomination papers file
+    const nominationPapersPathData = req.files['nominationPapersPath'][0].buffer;
+    const nominationPapersPathContentType = req.files['nominationPapersPath'][0].mimetype;
+    const nominationPapersPathFileName = `${Date.now()}_nominationPapersPath.${nominationPapersPathContentType.split('/')[1]}`;
+    const nominationPapersPathBlockBlobClient = containerClientMLA.getBlockBlobClient(nominationPapersPathFileName);
+    await nominationPapersPathBlockBlobClient.uploadData(nominationPapersPathData, {
+      blobHTTPHeaders: { blobContentType: nominationPapersPathContentType },
+    });
+    const nominationPapersPathPath = `${containerClientMLA.url}/${nominationPapersPathFileName}`;
+    data.nominationPapersPath = nominationPapersPathPath;
+
+    // Check if an MLA with the same Aadhar card number already exists
+    const existingMLA = await MLA.findOne({ aadharCardNumber: data.aadharCardNumber });
+
+    if (existingMLA) {
+      return res.status(400).json({ error: 'MLA with entered Aadhar number already exists' });
+    }
+
+    // If Aadhar card number is unique, proceed with MLA creation
+    const newMLA = new MLA(data);
+    await newMLA.save();
+
+    res.status(201).json({ message: 'MLA created successfully', mla: newMLA });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 app.get('/', (req, res) => {
