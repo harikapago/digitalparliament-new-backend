@@ -666,13 +666,10 @@ app.post('/mla/login', async (req, res) => {
       return res.status(400).json({ error: 'Email not found' });
     }
 
-    // Compare the provided password with the stored hashed password using bcrypt
-    const isPasswordMatch = await bcrypt.compare(password, existingMLA.password);
-
-    if (!isPasswordMatch) {
+      // Compare the provided password with the stored password
+    if (existingMLA.password !== password) {
       return res.status(401).json({ error: 'Invalid password' });
     }
-
     // If the email and password are correct, you can provide a token or other authentication response.
     // For simplicity, we'll just send a success message.
     res.json({ message: 'Login successful', mla: existingMLA });
