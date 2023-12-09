@@ -45,6 +45,10 @@ const mlaSchema = new mongoose.Schema({
    
     unique: true
   },
+  password:{
+    type:String
+  },
+  
   phone: {
     type: String,
    
