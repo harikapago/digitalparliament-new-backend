@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const app = express();
 const cors = require('cors');
+const bcrypt = require('bcrypt');
 const { Party } = require('./partyschema.js');
 const ConstituencyData = require('./constituencyDataschema.js');
 const MLA = require('./MlaregistrationSchema.js');
@@ -649,6 +650,34 @@ app.delete('/api/mlas/:aadharCardNumber', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+app.post('/mla/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Check if an MLA with the given email exists
+    const existingMLA = await MLA.findOne({ email });
+
+    if (!existingMLA) {
+      return res.status(400).json({ error: 'Email not found' });
+    }
+
+    // Compare the provided password with the stored hashed password using bcrypt
+    const isPasswordMatch = await bcrypt.compare(password, existingMLA.password);
+
+    if (!isPasswordMatch) {
+      return res.status(401).json({ error: 'Invalid password' });
+    }
+
+    // If the email and password are correct, you can provide a token or other authentication response.
+    // For simplicity, we'll just send a success message.
+    res.json({ message: 'Login successful', mla: existingMLA });
+  } catch (error) {
+    res.status(400).json({ error: 'Login failed' });
   }
 });
 
