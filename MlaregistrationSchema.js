@@ -92,7 +92,11 @@ const mlaSchema = new mongoose.Schema({
   longitude: {
     type: String,
    
-  }
+  },
+  mlaApprovalStatus: {
+    type: String,
+    default: 'pending', 
+  },
 });
 
 // Create the MLA model
