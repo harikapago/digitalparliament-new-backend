@@ -21,7 +21,10 @@ const registrationSchema = new mongoose.Schema({
   password: String,
   DOB: Date,
   gender: String,
-});
+  userType: {
+    type: String,
+    default: 'citizen', 
+  },
 
 
 // Create a Mongoose model based on the schema
