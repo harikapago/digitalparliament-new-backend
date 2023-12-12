@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const { Party } = require('./partyschema.js');
 const ConstituencyData = require('./constituencyDataschema.js');
 const MLA = require('./MlaregistrationSchema.js');
+const GrievanceClearance = require('./Grievanceclearance.js');
 
 app.use(cors());
 app.use(express.json());
@@ -679,6 +680,77 @@ app.post('/mla/login', async (req, res) => {
     res.json({ message: 'Login successful', mla: existingMLA });
   } catch (error) {
     res.status(400).json({ error: 'Login failed' });
+  }
+});
+
+// ---------------------------------------mla clearing Grievance-------------
+
+const clearanceContainerName = "digitalp-grievance-clearance";
+const clearanceContainerClient = blobServiceClient.getContainerClient(clearanceContainerName);
+
+app.post('/post-grievance-clearance', upload.array('photos', 3), async (req, res) => {
+  try {
+    const { clearedBy, grievance_id , description } = req.body;
+    const supportingPhotosData = req.files.map(file => file.buffer);
+    const contentType = req.files[0].mimetype;
+
+    const photoUploadPromises = supportingPhotosData.map(async (photoData, index) => {
+      const photoFileName = `${Date.now()}_photo${index + 1}.${contentType.split('/')[1]}`;
+      const blockBlobClient = clearanceContainerClient.getBlockBlobClient(photoFileName);
+
+      await blockBlobClient.uploadData(photoData, {
+        blobHTTPHeaders: { blobContentType: contentType },
+      });
+
+      return `${clearanceContainerClient.url}/${photoFileName}`;
+    });
+
+    const supportingPhotos = await Promise.all(photoUploadPromises);
+
+    const grievanceClearance = new GrievanceClearance({ clearedBy, description, grievance_id,supportingPhotos });
+    await grievanceClearance.save();
+
+    res.status(201).json({ message: 'Grievance clearance posted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get all GrievanceClearances
+app.get('/get-all-grievance-clearances', async (req, res) => {
+  try {
+    const allGrievanceClearances = await GrievanceClearance.find();
+    res.json(allGrievanceClearances);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete all GrievanceClearances
+app.delete('/delete-all-grievance-clearances', async (req, res) => {
+  try {
+    await GrievanceClearance.deleteMany();
+    res.json({ message: 'All GrievanceClearances deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Delete GrievanceClearance by ID
+app.delete('/delete-grievance-clearance/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedGrievanceClearance = await GrievanceClearance.findByIdAndDelete(id);
+    if (!deletedGrievanceClearance) {
+      return res.status(404).json({ error: 'GrievanceClearance not found' });
+    }
+    res.json({ message: 'GrievanceClearance deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
