@@ -25,6 +25,7 @@ const registrationSchema = new mongoose.Schema({
     type: String,
     default: 'citizen', 
   },
+});
 
 
 // Create a Mongoose model based on the schema
