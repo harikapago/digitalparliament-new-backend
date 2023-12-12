@@ -81,6 +81,9 @@ const mlaSchema = new mongoose.Schema({
     type: String,
    
   },
+  MP:{
+    type: String,
+  },
   pinCodes: {
     type: [String],
    
