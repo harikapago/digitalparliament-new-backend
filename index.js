@@ -659,7 +659,7 @@ app.delete('/api/mlas/:aadharCardNumber', async (req, res) => {
 });
 
 
-router.put('/api/mla/approve/:id', async (req, res) => {
+app.put('/api/mla/approve/:id', async (req, res) => {
   try {
     const mlaId = req.params.id;
 
