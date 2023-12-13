@@ -658,6 +658,31 @@ app.delete('/api/mlas/:aadharCardNumber', async (req, res) => {
   }
 });
 
+app.put('mla/approve/:id', async (req, res) => {
+  const mlaId = req.params.id;
+
+  try {
+    // Find the MLA by ID
+    const mla = await MLA.findById(mlaId);
+
+    // Check if MLA exists
+    if (!mla) {
+      return res.status(404).json({ message: 'MLA not found' });
+    }
+
+    // Update the mlaApprovalStatus to 'approved'
+    mla.mlaApprovalStatus = 'approved';
+
+    // Save the updated MLA
+    await mla.save();
+
+    // Respond with the updated MLA
+    return res.status(200).json(mla);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 
 
 app.post('/mla/login', async (req, res) => {
