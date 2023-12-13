@@ -658,31 +658,30 @@ app.delete('/api/mlas/:aadharCardNumber', async (req, res) => {
   }
 });
 
-app.put('mla/approve/:id', async (req, res) => {
-  const mlaId = req.params.id;
 
+router.put('/api/mla/approve/:id', async (req, res) => {
   try {
-    // Find the MLA by ID
-    const mla = await MLA.findById(mlaId);
+    const mlaId = req.params.id;
+
+    // Find the MLA by ID and update the mlaApprovalStatus
+    const updatedMLA = await MLA.findByIdAndUpdate(
+      mlaId,
+      { $set: { mlaApprovalStatus: 'approved' } },
+      { new: true }
+    );
 
     // Check if MLA exists
-    if (!mla) {
-      return res.status(404).json({ message: 'MLA not found' });
+    if (!updatedMLA) {
+      return res.status(404).json({ error: 'MLA not found' });
     }
 
-    // Update the mlaApprovalStatus to 'approved'
-    mla.mlaApprovalStatus = 'approved';
-
-    // Save the updated MLA
-    await mla.save();
-
-    // Respond with the updated MLA
-    return res.status(200).json(mla);
+    res.status(200).json({ message: 'MLA approval status updated successfully', mla: updatedMLA });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Internal Server Error' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 
 app.post('/mla/login', async (req, res) => {
