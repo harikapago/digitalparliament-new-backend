@@ -76,7 +76,7 @@ app.put('/user-updatestatus/:id', async (req, res) => {
 
    
     const updatedUser = await Registration.findOneAndUpdate(
-      { _id: id },
+      { _id: userId },
       { $set: { approvalStatus: 'approved' } },
       { new: true }
     );
