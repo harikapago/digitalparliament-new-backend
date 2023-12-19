@@ -26,6 +26,10 @@ const registrationSchema = new mongoose.Schema({
     type: String,
     default: 'citizen', 
   },
+  approvalStatus: {
+    type: String,
+    default: 'pending', 
+  },
 });
 
 
