@@ -102,6 +102,24 @@ app.get('/registrations', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve registrations' });
   }
 });
+
+// Delete a user by ID
+app.delete('/registrations/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const deletedUser = await Registration.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete the user' });
+  }
+});
+
 // Delete all registrations
 app.delete('/registrations', async (req, res) => {
   try {
