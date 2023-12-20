@@ -180,6 +180,7 @@ const grievanceSchema = new mongoose.Schema({
   location: String,
   paymentId:String,
   constituencyName:String,
+  postedBy:String,
  approvalStatus: {
     type: String,
     default: 'pending', 
@@ -192,7 +193,7 @@ const Grievance = mongoose.model('Grievance', grievanceSchema);
 // Create an API endpoint for posting grievances
 app.post('/post-grievance', upload.single('image'), async (req, res) => {
   try {
-    const { title, description,paymentId,constituencyName,location } = req.body;
+    const { title, description,paymentId,constituencyName,postedBy,location } = req.body;
     const imageData = req.file.buffer;
     const contentType = req.file.mimetype;
 
@@ -205,7 +206,7 @@ app.post('/post-grievance', upload.single('image'), async (req, res) => {
 
     const imagePath = `${containerClient.url}/${imageFileName}`;
 
-    const grievance = new Grievance({ title, description, imagePath,paymentId, constituencyName,location });
+    const grievance = new Grievance({ title, description, imagePath,paymentId, constituencyName,postedBy,location });
     await grievance.save();
 
     res.status(201).json({ message: 'Grievance posted successfully' });
@@ -301,6 +302,7 @@ const applauseSchema = new mongoose.Schema({
   location: String,
   paymentId:String,
   constituencyName:String,
+  postedBy:String,
   dateOfPosting: { type: Date, default: Date.now }
 });
 
@@ -309,7 +311,7 @@ const Applause = mongoose.model('Applause', applauseSchema);
 // Create an API endpoint for posting applauses
 app.post('/post-applause', upload.single('image'), async (req, res) => {
   try {
-    const { title, description,paymentId,constituencyName, location } = req.body;
+    const { title, description,paymentId,constituencyName,postedBy, location } = req.body;
     const imageData = req.file.buffer;
     const contentType = req.file.mimetype;
 
@@ -322,7 +324,7 @@ app.post('/post-applause', upload.single('image'), async (req, res) => {
 
     const imagePath = `${containerClient2.url}/${imageFileName}`;
 
-    const  applause= new Applause({ title, description, imagePath,paymentId,constituencyName, location });
+    const  applause= new Applause({ title, description, imagePath,paymentId,constituencyName,postedBy, location });
     await applause.save();
 
     res.status(201).json({ message: 'applause posted successfully' });
