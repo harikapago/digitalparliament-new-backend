@@ -9,7 +9,7 @@ const ConstituencyData = require('./constituencyDataschema.js');
 const MLA = require('./MlaregistrationSchema.js');
 const GrievanceClearance = require('./Grievanceclearance.js');
 const MakePost = require("./MakePost.js");
-
+const Comment = require('./Comment.js');
 
 app.use(cors());
 app.use(express.json());
@@ -949,6 +949,91 @@ app.delete('/delete-postbyid/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// POST API to post a comment
+app.post('/post-comment', async (req, res) => {
+  try {
+    const { postId, postedBy, comment } = req.body;
+
+    const newComment = new Comment({
+      postId,
+      postedBy,
+      comment,
+    });
+
+    const savedComment = await newComment.save();
+    res.status(201).json(savedComment);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET API to get all comments based on postId
+app.get('/get-comments/:postId', async (req, res) => {
+  const postId = req.params.postId;
+
+  try {
+    const comments = await Comment.find({ postId });
+    res.json(comments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// GET API to get all comments
+app.get('/get-all-comments', async (req, res) => {
+  try {
+    const comments = await Comment.find();
+    res.json(comments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE API to delete all comments based on postId
+app.delete('/delete-comments/:postId', async (req, res) => {
+  const postId = req.params.postId;
+
+  try {
+    const deletedComments = await Comment.deleteMany({ postId });
+    res.json({ message: `Deleted ${deletedComments.deletedCount} comments` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE API to delete all comments
+app.delete('/delete-all-comments', async (req, res) => {
+  try {
+    const deletedComments = await Comment.deleteMany();
+    res.json({ message: `Deleted ${deletedComments.deletedCount} comments` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// DELETE API to delete a comment by its id
+app.delete('/delete-comment/:commentId', async (req, res) => {
+  const commentId = req.params.commentId;
+
+  try {
+    const deletedComment = await Comment.findByIdAndDelete(commentId);
+    if (deletedComment) {
+      res.json({ message: 'Comment deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Comment not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 app.get('/', (req, res) => {
