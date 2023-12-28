@@ -8,6 +8,8 @@ const { Party } = require('./partyschema.js');
 const ConstituencyData = require('./constituencyDataschema.js');
 const MLA = require('./MlaregistrationSchema.js');
 const GrievanceClearance = require('./Grievanceclearance.js');
+const MakePost = require("./MakePost.js");
+
 
 app.use(cors());
 app.use(express.json());
@@ -827,6 +829,47 @@ app.delete('/delete-grievance-clearance/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// ----------------------------------------- For Making post in home page ------------------------
+
+const MakePostContainerName = "digitaldp-make-post";
+const MakePostContainerClient = blobServiceClient.getContainerClient(MakePostContainerName);
+
+app.post('/make-post', upload.single('mediaFile'), async (req, res) => {
+  try {
+    const { id, postType, postCategory, postShortDescription, postLongDescription, likesCount } = req.body;
+    const mediaFileData = req.file.buffer;
+    const contentType = req.file.mimetype;
+
+    const mediaFileName = `${Date.now()}_${req.file.originalname}`; // Use a unique name
+    // Assuming you have a containerClient for your storage
+    const blockBlobClient = MakePostContainerClient.getBlockBlobClient(mediaFileName);
+
+    await blockBlobClient.uploadData(mediaFileData, {
+      blobHTTPHeaders: { blobContentType: contentType },
+    });
+
+    const mediaFilePath = `${MakePostContainerClient.url}/${mediaFileName}`;
+
+    const newPost = new MakePost({
+      id,
+      postType,
+      postCategory,
+      postShortDescription,
+      postLongDescription,
+      mediaFilePath,
+      likesCount
+    });
+
+    await newPost.save();
+
+    res.status(201).json({ message: 'Post created successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 app.get('/', (req, res) => {
