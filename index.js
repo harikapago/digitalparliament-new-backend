@@ -871,6 +871,59 @@ app.post('/make-post', upload.single('mediaFile'), async (req, res) => {
 });
 
 
+// Create a GET API endpoint to fetch all posts
+app.get('/get-posts', async (req, res) => {
+  try {
+    const posts = await MakePost.find();
+    res.json(posts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a GET API endpoint to fetch a post by ID
+app.get('/get-post/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  try {
+    const post = await MakePost.findById(postId);
+    if (post) {
+      res.json(post);
+    } else {
+      res.status(404).json({ error: 'Post not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/delete-all-posts', async (req, res) => {
+  try {
+    await MakePost.deleteMany({});
+    res.status(200).json({ message: 'All posts data deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+app.delete('/delete-postbyid/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deletedPost= await MakePost.findByIdAndDelete(id);
+    if (!deletedPost) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+    res.json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 app.get('/', (req, res) => {
   res.send('Hello, Digital Parliament world');
 });
