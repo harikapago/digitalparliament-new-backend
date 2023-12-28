@@ -837,7 +837,7 @@ const MakePostContainerClient = blobServiceClient.getContainerClient(MakePostCon
 
 app.post('/make-post', upload.single('mediaFile'), async (req, res) => {
   try {
-    const { id, postType, postCategory, postShortDescription, postLongDescription, likesCount } = req.body;
+    const {  postType, postCategory, postShortDescription, postLongDescription } = req.body;
     const mediaFileData = req.file.buffer;
     const contentType = req.file.mimetype;
 
@@ -852,13 +852,13 @@ app.post('/make-post', upload.single('mediaFile'), async (req, res) => {
     const mediaFilePath = `${MakePostContainerClient.url}/${mediaFileName}`;
 
     const newPost = new MakePost({
-      id,
+     
       postType,
       postCategory,
       postShortDescription,
       postLongDescription,
       mediaFilePath,
-      likesCount
+      
     });
 
     await newPost.save();
@@ -869,7 +869,6 @@ app.post('/make-post', upload.single('mediaFile'), async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-
 
 
 app.get('/', (req, res) => {
