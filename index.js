@@ -94,6 +94,33 @@ app.put('/user-updatestatus/:id', async (req, res) => {
   }
 });
 
+// Handle POST request to update password based on email
+app.post('/update-password', async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  try {
+    // Check if a registration with the given email exists
+    const existingRegistration = await Registration.findOne({ email });
+
+    if (!existingRegistration) {
+      // Registration with the given email does not exist
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Hash the new password before updating it
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the password in the database
+    existingRegistration.password = hashedPassword;
+    await existingRegistration.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // Retrieve all registrations
 app.get('/registrations', async (req, res) => {
