@@ -108,10 +108,10 @@ app.post('/update-password', async (req, res) => {
     }
 
     // Hash the new password before updating it
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    // const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update the password in the database
-    existingRegistration.password = hashedPassword;
+    existingRegistration.password = newPassword;
     await existingRegistration.save();
 
     res.json({ message: 'Password updated successfully' });
