@@ -16,6 +16,7 @@ const postSchema = new mongoose.Schema({
   postShortDescription: {
     type: String,
     required: true,
+    
   },
   postLongDescription: {
     type: String,
